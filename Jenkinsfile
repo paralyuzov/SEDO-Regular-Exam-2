@@ -12,6 +12,20 @@ pipeline {
             }
         }
 
+        stage('Setup .NET') {
+            when { branch 'main' }
+            steps {
+                bat '''
+                    dotnet --version
+                    if %errorlevel% neq 0 (
+                        echo .NET SDK 8.0.x not found. Please install .NET 8.0 SDK
+                        exit /b 1
+                    )
+                    echo .NET 8.0 SDK is ready
+                '''
+            }
+        }
+
         stage('Restore dependencies') {
             when { branch 'main' }
             steps {
