@@ -23,10 +23,13 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore Horizons.sln
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
+      - name: Build solution
+        run: dotnet build Horizons.sln --configuration Release --no-restore
 
-      - name: Run tests
-        run: dotnet test Horizons.sln --no-build --verbosity normal
+      - name: Run Unit Tests
+        run: dotnet test Horizons.Tests.Unit/Horizons.Tests.Unit.csproj --no-build --logger "trx" --verbosity normal
+
+      - name: Run Integration Tests
+        run: dotnet test Horizons.Tests.Integration/Horizons.Tests.Integration.csproj --no-build --logger "trx" --verbosity normal
