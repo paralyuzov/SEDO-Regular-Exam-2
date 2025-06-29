@@ -1,35 +1,44 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
 name: .NET 8 CI
 
 on:
   push:
-    branches:
+    branches: 
       - develop
       - 'feature/**'
+  pull_request:
+    branches: 
+      - develop
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup .NET SDK 8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Restore dependencies
-        run: dotnet restore Horizons.sln
-
-      - name: Build solution
-        run: dotnet build Horizons.sln --configuration Release --no-restore
-
-      - name: Run Unit Tests
-        run: dotnet test Horizons.Tests.Unit/Horizons.Tests.Unit.csproj --no-build --logger "trx" --verbosity normal
-
-      - name: Run Integration Tests
-        run: dotnet test Horizons.Tests.Integration/Horizons.Tests.Integration.csproj --no-build --logger "trx" --verbosity normal
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+          
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build solution
+      run: dotnet build --configuration Release --no-restore
+      
+    - name: Run unit tests
+      run: dotnet test Horizons.Tests.Unit/Horizons.Tests.Unit.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory "TestResults"
+      
+    - name: Run integration tests
+      run: dotnet test Horizons.Tests.Integration/Horizons.Tests.Integration.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory "TestResults"
+      
