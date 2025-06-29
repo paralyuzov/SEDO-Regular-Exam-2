@@ -1,19 +1,18 @@
 pipeline {
     agent any
-
+    
     triggers {
         pollSCM('H/5 * * * *')
     }
-
+    
     stages {
-        stage('Checkout') {
+        stage('Checkout code') {
             steps {
                 checkout scm
             }
         }
-
+        
         stage('Setup .NET') {
-            when { branch 'main' }
             steps {
                 bat '''
                     dotnet --version
@@ -25,23 +24,26 @@ pipeline {
                 '''
             }
         }
-
+        
+        stage('Cache dependencies') {
+            steps {
+                echo 'Using local NuGet package cache (automatic in Jenkins)'
+            }
+        }
+        
         stage('Restore dependencies') {
-            when { branch 'main' }
             steps {
                 bat 'dotnet restore'
             }
         }
-
-        stage('Build') {
-            when { branch 'main' }
+        
+        stage('Build solution') {
             steps {
                 bat 'dotnet build --configuration Release --no-restore'
             }
         }
-
-        stage('Run Unit Tests') {
-            when { branch 'main' }
+        
+        stage('Run unit tests') {
             steps {
                 bat '''
                     dotnet test Horizons.Tests.Unit\\Horizons.Tests.Unit.csproj ^
@@ -49,13 +51,12 @@ pipeline {
                         --no-build ^
                         --verbosity normal ^
                         --logger trx ^
-                        --results-directory "TestResults\\Unit"
+                        --results-directory "TestResults"
                 '''
             }
         }
-
-        stage('Run Integration Tests') {
-            when { branch 'main' }
+        
+        stage('Run integration tests') {
             steps {
                 bat '''
                     dotnet test Horizons.Tests.Integration\\Horizons.Tests.Integration.csproj ^
@@ -63,7 +64,7 @@ pipeline {
                         --no-build ^
                         --verbosity normal ^
                         --logger trx ^
-                        --results-directory "TestResults\\Integration"
+                        --results-directory "TestResults"
                 '''
             }
         }
