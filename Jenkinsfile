@@ -2,40 +2,32 @@ pipeline {
     agent any
 
     triggers {
-        pollSCM('H/5 * * * *') 
-    }
-
-    options {
-        skipDefaultCheckout(true)
+        pollSCM('H/5 * * * *')
     }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-                script {
-                    if (env.BRANCH_NAME != 'main') {
-                        echo "Not on 'main' branch. Skipping build."
-                        currentBuild.result = 'SUCCESS'
-                        exit 0
-                    }
-                }
             }
         }
 
         stage('Restore dependencies') {
+            when { branch 'main' }
             steps {
                 bat 'dotnet restore'
             }
         }
 
         stage('Build') {
+            when { branch 'main' }
             steps {
                 bat 'dotnet build --configuration Release --no-restore'
             }
         }
 
         stage('Run Unit Tests') {
+            when { branch 'main' }
             steps {
                 bat '''
                     dotnet test Horizons.Tests.Unit\\Horizons.Tests.Unit.csproj ^
@@ -49,6 +41,7 @@ pipeline {
         }
 
         stage('Run Integration Tests') {
+            when { branch 'main' }
             steps {
                 bat '''
                     dotnet test Horizons.Tests.Integration\\Horizons.Tests.Integration.csproj ^
